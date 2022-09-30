@@ -72,13 +72,30 @@ server.get('/games', async (req, res) => {
 
 });
 
+server.post('/games', async (req, res) => {
+
+    const newGame = req.body;
+
+    try {
+        const conflict = await connection.query(`SELECT id FROM games WHERE name='${newGame.name}'`);
+
+        if (conflict['rowCount'] !== 0) {
+            return res.sendStatus(409);
+        };
+
+    } catch (error) {
+        return res.sendStatus(500);
+    };
+    
+    return res.sendStatus(200);
+
+});
+
 
 
 server.get('/status', (req, res) => {
     res.send("ok").status(200);
 });
-
-
 
 server.listen(5000, () => {
     console.log('Magic happens on 5000');
