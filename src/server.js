@@ -51,6 +51,21 @@ server.post('/categories', async (req, res) => {
     }
 });
 
+server.get('/games', async (req, res) => {
+
+    try {
+        const games = await connection.query('SELECT games.*, categories.name as "categoryName" FROM games JOIN categories ON games."categoryId"=categories.id;');
+        console.log(games['rows']);
+        return res.send(games['rows']).status(200);
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
+    };
+
+});
+
+
+
 server.get('/status', (req, res) => {
     res.send("ok").status(200);
 });
