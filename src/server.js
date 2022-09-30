@@ -53,7 +53,15 @@ server.post('/categories', async (req, res) => {
 
 server.get('/games', async (req, res) => {
 
+    const search = req.query.name;
+    console.log(search);
+
     try {
+        if (search) {
+            const games = await connection.query(`SELECT games.*, categories.name as "categoryName" FROM games JOIN categories ON games."categoryId"=categories.id WHERE games.name LIKE '%${search}%';
+            `);
+            res.send(games['rows']).status(200);
+        }
         const games = await connection.query('SELECT games.*, categories.name as "categoryName" FROM games JOIN categories ON games."categoryId"=categories.id;');
         console.log(games['rows']);
         return res.send(games['rows']).status(200);
