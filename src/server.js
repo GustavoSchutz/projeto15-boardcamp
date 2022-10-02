@@ -1,6 +1,9 @@
 import express from 'express';
 import pkg from 'pg';
 import dotenv from 'dotenv';
+import joi from 'joi';
+import cors from 'cors';
+import dayjs from 'dayjs';
 
 dotenv.config();
 
@@ -11,7 +14,26 @@ const connection = new Pool({
 });
  
 const server = express();
+server.use(cors());
 server.use(express.json());
+
+const customerSchema = joi.object({
+    name: joi.string()
+        .required(),
+    phone: joi.string()
+        .regex(/^\d+$/)
+        .min(10)
+        .max(11)
+        .required(),
+    cpf: joi.string()
+        .regex(/^\d+$/)
+        .min(11)
+        .max(11)
+        .required(),
+    birthday: joi.date()
+        .required()
+});
+
 
 server.get('/categories', async (req, res) => {
     
@@ -160,7 +182,53 @@ server.get('/customers/:id', async (req, res) => {
 
 });
 
-server.post('/customers', async)
+server.post('/customers', async (req, res) => {
+
+    const newCustomer = req.body;
+    console.log(newCustomer.cpf);
+    const newCustomerValidation = customerSchema.validate(newCustomer);
+    const today = dayjs(new Date());
+
+    if (dayjs(newCustomer.birthday).isAfter(today)) {
+        console.log(newCustomer.birthday);
+        return res.sendStatus(400);
+    };
+
+    if (newCustomerValidation.error) {
+        console.log(newCustomerValidation.error.details);
+        return res.sendStatus(400);
+    };
+
+
+
+    try {
+        const conflict = await connection.query(
+            'SELECT * FROM customers WHERE cpf=$1;', 
+            [newCustomer.cpf]
+        );
+        console.log(conflict['rowCount']);
+        if (!(conflict['rowCount'] === 0)) {
+            return res.sendStatus(409);
+        };
+
+        const createNewCustomer = await connection.query(
+            'INSERT INTO customers (name,phone,cpf,birthday) VALUES ($1,$2,$3,$4);',
+            [
+                newCustomer.name,
+                newCustomer.phone,
+                newCustomer.cpf,
+                newCustomer.birthday
+            ]
+        );
+
+        return res.sendStatus(201);
+
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
+    }
+
+});
 
 server.get('/status', (req, res) => {
     res.send("ok").status(200);
