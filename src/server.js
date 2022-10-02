@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { response } from 'express';
 import pkg from 'pg';
 import dotenv from 'dotenv';
 import joi from 'joi';
@@ -229,6 +229,64 @@ server.post('/customers', async (req, res) => {
     }
 
 });
+
+server.put("/customers/:id", async (req, res) => {
+
+    const id = req.params.id;
+
+    const updatedCustomerData = req.body;
+
+    const newCustomerValidation = customerSchema.validate(updatedCustomerData);
+    const today = dayjs(new Date());
+
+    if (dayjs(updatedCustomerData.birthday).isAfter(today)) {
+        console.log(updatedCustomerData.birthday);
+        return res.sendStatus(400);
+    };
+
+    if (newCustomerValidation.error) {
+        console.log(newCustomerValidation.error.details);
+        return res.sendStatus(400);
+    };
+
+    try {
+
+        const customer = await connection.query(
+            'SELECT * FROM customers WHERE id=$1',
+            [id]
+        );
+        if (customer['rowCount'] === 0) {
+            return res.sendStatus(404);
+        };
+
+        console.log(updatedCustomerData.cpf);
+
+        const conflict = await connection.query(
+            'SELECT id FROM customers WHERE cpf=$1;', 
+            [updatedCustomerData.cpf]
+        );
+        console.log(conflict['rows'][0].id);
+        if (!(conflict['rowCount'] === 0) && conflict['rows'][0].id !== id) {
+            return res.sendStatus(409);
+        };
+
+        const updateCustomer = await connection.query('UPDATE customers SET name=$1, phone=$2, cpf=$3, birthday=$4 WHERE id=$5;',
+        [
+            updatedCustomerData.name,
+            updatedCustomerData.phone,
+            updatedCustomerData.cpf,
+            updatedCustomerData.birthday
+        ]);
+
+        return res.sendStatus(200)
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
+    }
+
+});
+
+
 
 server.get('/status', (req, res) => {
     res.send("ok").status(200);
