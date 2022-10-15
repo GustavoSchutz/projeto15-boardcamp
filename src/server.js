@@ -297,7 +297,7 @@ server.get('/rentals', async (req, res) => {
         if (customerId) {
 
             const rentailsByCustomer = await connection.query(
-                `SELECT rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate", TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate", json_build_object('id', customers.id, 'name', customers.name) AS customer, json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game FROM rentals JOIN customers ON rentals."customerId" = customers.id JOIN games ON rentals."gameId" = games.id JOIN categories ON games."categoryId" = categories.id WHERE rentals."customerId" = $1`,
+                `SELECT rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate", TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate", json_build_object('id', customers.id, 'name', customers.name) AS customer, json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game FROM rentals JOIN customers ON rentals."customerId" = customers.id JOIN games ON rentals."gameId" = games.id JOIN categories ON games."categoryId" = categories.id WHERE rentals."customerId" = $1;`,
                 [customerId]
             );
 
@@ -307,7 +307,16 @@ server.get('/rentals', async (req, res) => {
 
         if (gameId) {
             const rentailsByGame = await connection.query(
-                `SELECT rentals.*, TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate", TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate", json_build_object('id', customers.id, 'name', customers.name) AS customer, json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game FROM rentals JOIN customers ON rentals."customerId" = customers.id JOIN games ON rentals."gameId" = games.id JOIN categories ON games."categoryId" = categories.id WHERE rentals."gameId" = $1`,
+                `SELECT rentals.*, 
+                TO_CHAR(rentals."rentDate", 'YYYY-MM-DD') AS "rentDate", 
+                TO_CHAR(rentals."returnDate", 'YYYY-MM-DD') AS "returnDate", 
+                json_build_object('id', customers.id, 'name', customers.name) AS customer, 
+                json_build_object('id', games.id, 'name', games.name, 'categoryId', games."categoryId", 'categoryName', categories.name) AS game 
+                FROM rentals 
+                JOIN customers ON rentals."customerId" = customers.id 
+                JOIN games ON rentals."gameId" = games.id 
+                JOIN categories ON games."categoryId" = categories.id 
+                WHERE rentals."gameId" = $1;`,
                 [gameId]
             );
 
